@@ -1,0 +1,7 @@
+{
+  "name": "LAYA AURA — Beauty in Every Detail",
+  "description": "Luxurious online jewellery boutique offering gold-coated and fashion jewellery, exclusive deals, and comprehensive admin management system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

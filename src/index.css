@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ivory: #F8F3EA;
+  --color-cream: #EFE4D3;
+  --color-champagne: #C9A46A;
+  --color-softgold: #D8B982;
+  --color-espresso: #3A2924;
+  --color-taupe: #8A7568;
+  --color-rose: #CFAFA6;
+  
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-espresso);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+}
+
