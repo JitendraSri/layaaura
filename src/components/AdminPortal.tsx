@@ -59,6 +59,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [saleName, setSaleName] = useState('');
   const [saleDiscount, setSaleDiscount] = useState(20);
   const [selectedSaleProductIds, setSelectedSaleProductIds] = useState<string[]>([]);
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [couponCode, setCouponCode] = useState('');
@@ -451,6 +452,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                 </div>
                 <button
                   onClick={() => {
+                    setEditingSale(null);
                     setSaleName('');
                     setSaleDiscount(20);
                     setSelectedSaleProductIds([]);
@@ -463,21 +465,72 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {sales.map((s) => (
-                  <div key={s.id} className="bg-white p-6 rounded-xl border border-[#EFE4D3] space-y-3">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-serif font-bold text-lg text-[#3A2924]">{s.saleName}</h4>
-                      <span className="bg-[#C9A46A] text-[#3A2924] px-2.5 py-1 rounded font-bold text-xs">{s.discountPercentage}% OFF</span>
+                {sales.map((s) => {
+                  const includedProducts = products.filter(p => s.productIds.includes(p.id));
+                  return (
+                    <div key={s.id} className="bg-white p-6 rounded-xl border border-[#EFE4D3] space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-serif font-bold text-lg text-[#3A2924]">{s.saleName}</h4>
+                        <span className="bg-[#C9A46A] text-[#3A2924] px-2.5 py-1 rounded font-bold text-xs">{s.discountPercentage}% OFF</span>
+                      </div>
+                      <p className="text-xs text-[#8A7568]">Active: {new Date(s.startDate).toLocaleDateString()} — {new Date(s.endDate).toLocaleDateString()}</p>
+                      
+                      {/* Included Items List */}
+                      <div className="space-y-1.5 pt-2 border-t border-[#EFE4D3]">
+                        <p className="text-xs font-bold text-[#3A2924]">Included Items ({includedProducts.length}):</p>
+                        <div className="max-h-32 overflow-y-auto space-y-1 bg-[#F8F3EA]/50 p-2 rounded">
+                          {includedProducts.length === 0 ? (
+                            <p className="text-[10px] text-[#8A7568]">No items in this sale.</p>
+                          ) : (
+                            includedProducts.map(prod => (
+                              <div key={prod.id} className="flex items-center justify-between text-xs bg-white p-1.5 rounded border border-[#EFE4D3]">
+                                <span className="truncate pr-2 font-medium">{prod.name}</span>
+                                <button
+                                  onClick={() => {
+                                    setSales(sales.map(item => item.id === s.id ? { ...item, productIds: item.productIds.filter(id => id !== prod.id) } : item));
+                                  }}
+                                  className="text-rose-600 hover:text-rose-800 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50"
+                                  title="Remove item from sale"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2">
+                        <button
+                          onClick={() => setSales(sales.map(item => item.id === s.id ? { ...item, isActive: !item.isActive } : item))}
+                          className={`px-3 py-1.5 rounded text-xs font-semibold ${s.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}
+                        >
+                          {s.isActive ? 'Active' : 'Inactive'}
+                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              setEditingSale(s);
+                              setSaleName(s.saleName);
+                              setSaleDiscount(s.discountPercentage);
+                              setSelectedSaleProductIds(s.productIds);
+                              setIsSaleModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-[#3A2924] rounded text-xs font-semibold"
+                          >
+                            Edit Sale
+                          </button>
+                          <button
+                            onClick={() => setSales(sales.filter(item => item.id !== s.id))}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-xs font-semibold"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-[#8A7568]">Active: {new Date(s.startDate).toLocaleDateString()} — {new Date(s.endDate).toLocaleDateString()}</p>
-                    <button
-                      onClick={() => setSales(sales.map(item => item.id === s.id ? { ...item, isActive: !item.isActive } : item))}
-                      className={`px-3 py-1.5 rounded text-xs font-semibold ${s.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'}`}
-                    >
-                      {s.isActive ? 'Active (Click to Deactivate)' : 'Inactive (Click to Activate)'}
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -905,7 +958,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       {isSaleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="bg-[#F8F3EA] border border-[#C9A46A]/40 w-full max-w-md rounded-xl shadow-2xl p-6 relative space-y-4">
-            <h3 className="text-lg font-serif font-bold text-[#3A2924]">Create Sales Event</h3>
+            <h3 className="text-lg font-serif font-bold text-[#3A2924]">
+              {editingSale ? 'Edit Sales Event & Items' : 'Create Sales Event'}
+            </h3>
             <div>
               <label className="block uppercase text-[#8A7568] font-medium mb-1 text-xs">Sale Event Name</label>
               <input 
@@ -926,7 +981,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               />
             </div>
             <div>
-              <label className="block uppercase text-[#8A7568] font-medium mb-1 text-xs">Select Products to Apply Sale</label>
+              <label className="block uppercase text-[#8A7568] font-medium mb-1 text-xs">Select Products to Include / Edit</label>
               <div className="max-h-40 overflow-y-auto space-y-1 bg-white border border-[#EFE4D3] rounded p-2">
                 {products.length === 0 ? (
                   <p className="text-xs text-[#8A7568] p-2 text-center">No products available. Add products first.</p>
@@ -953,19 +1008,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
               </div>
             </div>
             <div className="flex justify-end space-x-3 pt-2">
-              <button onClick={() => setIsSaleModalOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded text-xs font-semibold">Cancel</button>
+              <button onClick={() => { setIsSaleModalOpen(false); setEditingSale(null); }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded text-xs font-semibold">Cancel</button>
               <button 
                 onClick={() => {
                   if (saleName.trim()) {
-                    setSales([...sales, {
-                      id: `sale-${Date.now()}`,
-                      saleName,
-                      productIds: selectedSaleProductIds,
-                      discountPercentage: saleDiscount,
-                      startDate: new Date().toISOString(),
-                      endDate: new Date(Date.now() + 7*86400000).toISOString(),
-                      isActive: true
-                    }]);
+                    if (editingSale) {
+                      setSales(sales.map(s => s.id === editingSale.id ? {
+                        ...s,
+                        saleName,
+                        discountPercentage: saleDiscount,
+                        productIds: selectedSaleProductIds
+                      } : s));
+                    } else {
+                      setSales([...sales, {
+                        id: `sale-${Date.now()}`,
+                        saleName,
+                        productIds: selectedSaleProductIds,
+                        discountPercentage: saleDiscount,
+                        startDate: new Date().toISOString(),
+                        endDate: new Date(Date.now() + 7*86400000).toISOString(),
+                        isActive: true
+                      }]);
+                    }
                     if (selectedSaleProductIds.length > 0) {
                       setProducts(products.map(p => {
                         if (selectedSaleProductIds.includes(p.id)) {
@@ -976,12 +1040,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                         return p;
                       }));
                     }
+                    setEditingSale(null);
                     setIsSaleModalOpen(false);
                   }
                 }} 
                 className="px-5 py-2 bg-[#3A2924] text-[#F8F3EA] rounded text-xs font-semibold"
               >
-                Create Sale & Apply Discount
+                {editingSale ? 'Update Sale' : 'Create Sale & Apply Discount'}
               </button>
             </div>
           </div>
